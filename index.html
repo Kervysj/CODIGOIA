@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1420">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Comandos IA</title>
+<style>
+:root{--bg:#0f1420;--panel:#171e2e;--line:#27304a;--tx:#e8ecf4;--mut:#93a0bd;--ac:#7c9cff;--ok:#5fd6a0;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+button{touch-action:manipulation}
+body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 14px 8px;border-bottom:1px solid var(--line)}
+h1{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+h1 small{font-weight:400;color:var(--mut);font-size:.85rem;margin-left:6px}
+#q{width:100%;margin-top:10px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font:inherit}
+#q:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#cats{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+#cats button{flex:none;border:1px solid var(--line);background:none;color:var(--mut);padding:9px 15px;border-radius:99px;font:inherit;font-size:.92rem;cursor:pointer}
+#cats button.on{background:var(--ac);color:#0b1020;border-color:var(--ac);font-weight:600}
+main{max-width:760px;margin:0 auto;padding:6px 14px 60px}
+h2{font-size:.95rem;font-weight:600;color:var(--mut);margin:20px 0 8px}
+.row{display:grid;grid-template-columns:28px minmax(140px,190px) 1fr;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.n{color:var(--mut);font-size:.8rem;text-align:right}
+.cmd{font:600 .95rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-align:left;padding:9px 11px;border-radius:8px;border:1px solid var(--line);border-bottom-width:3px;background:var(--panel);color:var(--ac);cursor:pointer;overflow-wrap:anywhere}
+.cmd:active{transform:translateY(2px);border-bottom-width:1px}
+.cmd.ok{color:var(--ok);border-color:var(--ok)}
+.d{font-size:.93rem}
+.ex{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:6px;color:var(--mut);font-size:.84rem}
+.eb{flex:none;border:1px solid var(--line);background:none;color:var(--ac);border-radius:8px;padding:7px 11px;font:inherit;font-size:.82rem;min-height:36px;cursor:pointer}
+.eb.ok{color:var(--ok);border-color:var(--ok)}
+@media(max-width:600px){
+header{padding:10px 12px 6px}
+h1{font-size:1.15rem}
+main{padding:2px 12px 80px}
+h2{margin:18px 2px 8px;font-size:1rem}
+.row{display:block;position:relative;margin:0 0 10px;padding:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.n{position:absolute;top:12px;right:14px}
+.cmd{display:block;width:100%;min-height:48px;font-size:1.05rem;padding:12px;background:var(--bg)}
+.d{display:block;margin-top:9px;padding:0 2px;font-size:1rem;line-height:1.4}
+.ex{flex-direction:column;align-items:stretch;gap:8px;margin-top:8px;font-size:.88rem}
+.eb{min-height:44px;font-size:.9rem}
+}
+#t{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ok);color:#06231a;padding:9px 18px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+#t.s{opacity:1}
+.none{color:var(--mut);padding:30px 0;text-align:center}
+</style>
+</head>
+<body>
+<header>
+<h1>Comandos IA<small id="c"></small></h1>
+<input id="q" type="search" placeholder="Buscar comando o lo que hace…" autocomplete="off">
+<div id="cats"></div>
+</header>
+<main id="m"></main>
+<div id="t" role="status">Copiado</div>
+<script>
+const D=[
+["Respuestas rápidas",`human|Escribe de forma natural y humana
+expert|Responde a un nivel de experto
+ceo|Analiza con la mentalidad de un fundador de empresa
+viral|Ideas para contenido altamente viral
+seo|Contenido optimizado para buscadores
+critic|Identifica debilidades y fallos
+teacher|Explicación clara y simple
+eli5|Explícalo como si tuviera 5 años
+brief|La respuesta más corta posible
+strategy|Planificación estratégica a largo plazo
+copywriter|Texto persuasivo de marketing`],
+["Investigar y analizar",`research|Investigación profunda
+brainstorm|Genera ideas creativas
+promptengineer|Mejora cualquier prompt
+summarize|Resume los puntos principales
+simplify|Simplifica contenido complejo
+detailed|Proporciona una explicación detallada
+stepbystep|Explica paso a paso
+examples|Proporciona ejemplos prácticos
+analyst|Analiza datos o información
+compare|Compara múltiples opciones
+proscons|Presenta los pros y los contras`],
+["Productividad y estudio",`decision|Ayuda a tomar la mejor decisión
+planner|Crea un plan de acción
+roadmap|Crea una hoja de ruta para alcanzar un objetivo
+action|Convierte ideas en pasos prácticos
+prioritize|Organiza tareas según su importancia
+productivity|Mejora la productividad
+focus|Identifica la tarea más importante
+time|Crea un plan de gestión del tiempo
+learn|Crea un plan de aprendizaje
+study|Crea una estrategia de estudio efectiva
+quiz|Evalúa conocimientos con preguntas`],
+["Carrera y mejora de textos",`flashcards|Crea tarjetas de estudio educativas para memorizar
+interview|Prepárame para entrevistas
+resume|Mejora el contenido de mi currículum
+career|Brinda orientación profesional
+mentor|Responde como un mentor personal
+coach|Proporciona entrenamiento práctico
+consultant|Ofrece recomendaciones profesionales
+editor|Mejora la claridad y la calidad del texto
+proofread|Identifica errores gramaticales y de ortografía
+rewrite|Reescribe con un mejor estilo
+professional|Haz la redacción más profesional`],
+["Tono y redacción",`casual|Haz que la redacción sea más conversacional
+friendly|Haz que la redacción sea más cálida y amigable
+persuasive|Haz que el mensaje sea más persuasivo
+concise|Elimina palabras innecesarias
+polish|Mejora la versión final
+tone|Ajusta el tono de la redacción
+storyteller|Convierte la información en una historia
+hook|Crea aperturas que llamen la atención
+headline|Crea titulares impactantes
+caption|Escribe pies de foto para redes sociales
+linkedin|Crea contenido para LinkedIn`],
+["Marketing y redes",`instagram|Crea contenido para Instagram
+youtube|Crea contenido para YouTube
+reels|Genera ideas para videos cortos
+script|Escribe un guion de video o presentación
+email|Escribe un correo electrónico efectivo
+sales|Crea mensajes enfocados en ventas
+offer|Crea una oferta irresistible
+brand|Desarrolla un mensaje de marca
+customer|Piensa desde la perspectiva del cliente
+audience|Analiza la audiencia objetivo
+competitor|Analiza a la competencia`],
+["Negocios y creatividad",`market|Analiza oportunidades de mercado
+startup|Piensa como un estratega experto en startups
+business|Desarrolla ideas de negocio
+pricing|Desarrolla una estrategia de precios
+funnel|Crea un embudo de marketing
+growth|Identifica oportunidades de crecimiento
+content|Desarrolla una estrategia de contenido
+calendar|Crea un calendario de contenido
+ideas|Genera nuevas ideas
+creative|Piensa de forma creativa y diferente
+unpopular|Cuestiona ideas convencionales`],
+["Pensamiento crítico y problemas",`devilsadvocate|Discute el punto de vista contrario
+contrarian|Descubre puntos de vista alternativos
+assumptions|Identifica suposiciones ocultas
+risks|Identifica posibles riesgos
+factcheck|Separa los hechos de las opiniones
+verify|Identifica qué necesita ser verificado
+logic|Examina el razonamiento y la lógica
+rootcause|Identifica la causa raíz del problema
+debug|Identifica problemas y propón soluciones
+solution|Genera soluciones prácticas
+alternative|Sugiere mejores alternativas`],
+["Formatos y avanzados",`optimize|Mejora un enfoque existente
+automate|Encuentra formas de automatizar la tarea
+template|Crea una plantilla reutilizable
+checklist|Crea una lista de verificación práctica
+framework|Construye un marco de trabajo organizado
+matrix|Organiza opciones en una matriz de decisión
+table|Convierte información en una tabla
+json|Estructura la respuesta en formato JSON
+roleplay|Simula un escenario realista
+reverse|Trabaja desde el resultado deseado hacia atrás
+ultimate|Proporciona la respuesta más completa`]];
+const E=Object.fromEntries(`human|escríbeme un mensaje para pedirle más plazo a mi proveedor
+expert|¿cómo mejoro el SEO de mi tienda en línea?
+ceo|tengo una pastelería, ¿cómo la hago crecer este año?
+viral|ideas de videos para mostrar cómo hago mis tortas
+seo|artículo sobre cómo elegir una torta de cumpleaños
+critic|revisa este plan de negocio y dime dónde falla: [pega tu plan]
+teacher|explícame qué es el interés compuesto
+eli5|qué es la inteligencia artificial
+brief|¿qué es un dominio web?
+strategy|plan a 3 años para abrir una segunda sucursal de mi negocio
+copywriter|texto para anunciar mi promoción del fin de semana
+research|impacto de las redes sociales en las ventas de negocios pequeños
+brainstorm|10 nombres para mi emprendimiento de postres
+promptengineer|mejora este prompt: "hazme un logo"
+summarize|resume este texto en 5 puntos: [pega el texto]
+simplify|explícame este contrato en palabras fáciles: [pega el texto]
+detailed|cómo funciona el pago de impuestos en un negocio pequeño
+stepbystep|cómo crear una página de Instagram para mi negocio
+examples|ejemplos de buenas descripciones de producto
+analyst|analiza estas ventas del mes y dime qué tendencias ves: [pega los datos]
+compare|Shopify vs WooCommerce para una tienda pequeña
+proscons|contratar un empleado vs. trabajar solo
+decision|¿alquilo un local o vendo desde casa?
+planner|plan para lanzar mi catálogo digital en 2 semanas
+roadmap|aprender programación web en 6 meses
+action|convierte estas ideas en tareas concretas: [pega tus ideas]
+prioritize|ordena estas tareas por importancia: [pega la lista]
+productivity|cómo organizo mi día si trabajo desde casa
+focus|tengo 10 pendientes, ¿cuál hago primero? [pega la lista]
+time|organiza mi semana entre trabajo, familia y estudio
+learn|plan para aprender inglés en 3 meses
+study|cómo estudiar para un examen de historia en una semana
+quiz|hazme 10 preguntas sobre la fotosíntesis
+flashcards|crea tarjetas de estudio sobre las células
+interview|prepárame para una entrevista de vendedor
+resume|mejora la sección de experiencia de mi currículum: [pega el texto]
+career|tengo 35 años y quiero cambiar a tecnología, ¿por dónde empiezo?
+mentor|no sé si renunciar a mi trabajo, ¿qué me aconsejas?
+coach|ayúdame a crear el hábito de hacer ejercicio
+consultant|¿cómo reduzco los costos de mi negocio?
+editor|mejora la claridad de este texto: [pega el texto]
+proofread|corrige la ortografía de este mensaje: [pega el texto]
+rewrite|reescribe este párrafo con mejor estilo: [pega el texto]
+professional|haz más profesional este correo: [pega el correo]
+casual|reescribe este mensaje de forma más cercana: [pega el texto]
+friendly|hazlo más amable: [pega el mensaje]
+persuasive|convence a un cliente de comprar el paquete grande
+concise|acorta este texto sin perder lo importante: [pega el texto]
+polish|pule la versión final de este texto: [pega el texto]
+tone|cambia el tono de este mensaje a uno más serio: [pega el mensaje]
+storyteller|cuenta la historia de mi negocio de forma emotiva
+hook|5 frases de apertura para un video sobre postres
+headline|10 titulares para anunciar mi nuevo producto
+caption|pie de foto para una torta de cumpleaños
+linkedin|publicación sobre lo que aprendí al emprender
+instagram|ideas de publicaciones para una semana
+youtube|ideas de videos y títulos para un canal de cocina
+reels|10 ideas de reels para mostrar mi negocio
+script|guion de 30 segundos para presentar mi producto
+email|correo para pedir una cotización a un proveedor
+sales|mensaje de WhatsApp para venderle a un cliente nuevo
+offer|oferta irresistible para clientes que compran los fines de semana
+brand|mensaje de marca para un negocio de postres caseros
+customer|qué piensa un cliente cuando ve mi catálogo
+audience|quién es mi cliente ideal si vendo ropa deportiva
+competitor|analiza a la competencia de panaderías en mi zona
+market|oportunidades de negocio en mi ciudad
+startup|valida mi idea de una app de delivery de comida
+business|ideas de negocio con poca inversión
+pricing|estrategia de precios para vender tortas por kilo
+funnel|embudo de ventas para vender por WhatsApp
+growth|cómo pasar de 20 a 100 clientes
+content|estrategia de contenido para 3 meses
+calendar|calendario de contenido para un mes en Instagram
+ideas|ideas para celebrar el aniversario de mi negocio
+creative|forma original de presentar mis productos
+unpopular|cuestiona la idea de que más seguidores es igual a más ventas
+devilsadvocate|voy a invertir en publicidad, dame los argumentos en contra
+contrarian|qué opinan quienes piensan distinto sobre trabajar desde casa
+assumptions|qué estoy dando por hecho en mi plan: [pega tu plan]
+risks|riesgos de abrir un negocio de comida
+factcheck|separa hechos y opiniones de este texto: [pega el texto]
+verify|qué datos de este texto debo verificar: [pega el texto]
+logic|revisa si el razonamiento de este argumento es correcto: [pega el argumento]
+rootcause|las ventas bajaron, ¿cuál puede ser la causa de fondo?
+debug|mi hoja de cálculo da error, ¿qué puede estar mal? [describe el error]
+solution|soluciones prácticas para clientes que pagan tarde
+alternative|alternativas a vender solo por Instagram
+optimize|mejora mi forma de atender pedidos: [describe cómo lo haces]
+automate|cómo automatizar las respuestas de WhatsApp de mi negocio
+template|plantilla para cotizar un servicio
+checklist|lista de verificación para abrir mi negocio cada día
+framework|marco de trabajo para organizar mis proyectos
+matrix|matriz de decisión para elegir entre 3 proveedores
+table|convierte esta información en una tabla: [pega los datos]
+json|dame esta información en formato JSON: [pega los datos]
+roleplay|simula una negociación con un cliente que pide descuento
+reverse|quiero ganar 1000 dólares al mes, ¿qué pasos debo seguir?
+ultimate|dame la guía más completa para empezar a vender en línea`.split("\n").map(l=>l.split("|")));
+let n=0;const A=[];const L=D.map(([c,t])=>({c,i:t.split("\n").map(l=>{const[k,d]=l.split("|");return{n:++n,k:"/"+k+":",d,e:E[k]}})}));
+const $=id=>document.getElementById(id);let cat=-1;
+function r(){const q=$("q").value.trim().toLowerCase();let h="",t=0;
+L.forEach((g,gi)=>{if(cat>=0&&cat!==gi)return;const it=g.i.filter(x=>!q||(x.k+x.d).toLowerCase().includes(q));if(!it.length)return;t+=it.length;
+h+=`<h2>${g.c}</h2>`+it.map(x=>`<div class="row"><span class="n">${x.n}</span><button class="cmd" data-k="${x.k}">${x.k}</button><div class="d">${x.d}<div class="ex"><span>Ej: ${x.e}</span><button class="eb" data-n="${x.n}">Copiar ejemplo</button></div></div></div>`).join("")});
+$("m").innerHTML=h||'<p class="none">No hay comandos con esa búsqueda.</p>';$("c").textContent=t+" comandos"}
+L.forEach(g=>g.i.forEach(x=>A[x.n]=x));
+$("cats").innerHTML=['Todos',...L.map(g=>g.c)].map((c,i)=>`<button data-i="${i-1}" class="${i?'':'on'}">${c}</button>`).join("");
+$("cats").onclick=e=>{const b=e.target.closest("button");if(!b)return;cat=+b.dataset.i;[...$("cats").children].forEach(x=>x.classList.toggle("on",x===b));r()};
+$("q").oninput=r;
+let tm;async function cp(v,b,m){try{await navigator.clipboard.writeText(v)}catch(_){const a=document.createElement("textarea");a.value=v;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+b.classList.add("ok");$("t").textContent=m;$("t").classList.add("s");clearTimeout(tm);tm=setTimeout(()=>{$("t").classList.remove("s");b.classList.remove("ok")},1200)}
+$("m").onclick=e=>{const eb=e.target.closest(".eb");if(eb){const x=A[+eb.dataset.n];return cp(x.k+" "+x.e,eb,"Ejemplo copiado")}
+const rw=e.target.closest(".row");if(!rw)return;const b=rw.querySelector(".cmd");cp(b.dataset.k+" ",b,"Copiado: "+b.dataset.k)};
+r();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
